@@ -5,7 +5,7 @@
 int sort_parallel(int VETOR_SIZE, int delta)
 {
 MPI_Init();
-my_rank = MPI_Comm_rank();  // pega pega o numero do processo atual (rank)
+my_rank = MPI_Comm_rank();  // pega o numero do processo atual (rank)
 
 // recebo vetor
 
@@ -23,7 +23,7 @@ else
 // dividir ou conquistar?
 
 if ( tam_vetor <= delta )
-   BubbleSort (vetor, );  // conquisto
+   BubbleSort (vetor);  // conquisto
 else
        {
     // dividir
