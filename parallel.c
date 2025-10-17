@@ -1,6 +1,9 @@
-Ir para o conteúdo principal
-Condições de conclusão
+#include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+int sort_parallel(int VETOR_SIZE, int delta)
+{
 MPI_Init();
 my_rank = MPI_Comm_rank();  // pega pega o numero do processo atual (rank)
 
@@ -20,7 +23,7 @@ else
 // dividir ou conquistar?
 
 if ( tam_vetor <= delta )
-   BubbleSort (vetor);  // conquisto
+   BubbleSort (vetor, );  // conquisto
 else
        {
     // dividir
@@ -49,8 +52,22 @@ else
 MPI_Finalize();
 
  
+}
+
+void BubbleSort(int *vetor, int tam_vetor) {
+    for (int i = 0; i < tam_vetor - 1; i++) {
+        for (int j = 0; j < tam_vetor - i - 1; j++) {
+            if (vetor[j] > vetor[j + 1]) {
+                // Swap vetor[j] and vetor[j + 1]
+                int temp = vetor[j];
+                vetor[j] = vetor[j + 1];
+                vetor[j + 1] = temp;
+            }
+        }
+    }
+}
+
 
  
 
-Última atualização: terça-feira, 14 out. 2025, 08:18
  

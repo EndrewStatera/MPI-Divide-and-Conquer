@@ -16,10 +16,10 @@ void bs(int n, int * vetor)
         for (d = 0 ; d < n - c - 1; d++)
             if (vetor[d] > vetor[d+1])
                 {
-                troca      = vetor[d];
-                vetor[d]   = vetor[d+1];
-                vetor[d+1] = troca;
-                trocou = 1;
+                    troca      = vetor[d];
+                    vetor[d]   = vetor[d+1];
+                    vetor[d+1] = troca;
+                    trocou = 1;
                 }
         c++;
         }
@@ -42,7 +42,6 @@ int main()
     #endif
 
     bs(ARRAY_SIZE, vetor);                     /* sort array */
-
 
     #ifdef DEBUG
     printf("\nVetor: ");
