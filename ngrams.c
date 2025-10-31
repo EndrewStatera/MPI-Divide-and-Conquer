@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <time.h>
 
 // Estrutura para armazenar nossa lista dinâmica de strings (tokens ou n-gramas)
 typedef struct {
@@ -152,8 +153,9 @@ void tokenize(const char *text, StringList *tokens) {
  * 2. Gera todos os N-gramas a partir da lista de tokens.
  */
 void generateNgrams(StringList *tokens, int N, StringList *ngrams) {
-    char ngram_buffer[1024]; // Buffer temporário para construir o N-grama
-
+    size_t buffer_size = 2048;
+    char *ngram_buffer = malloc(buffer_size); 
+    if (!ngram_buffer) {printf("Erro ao alocar buffer\n");return; }
     for (int i = 0; i <= tokens->size - N; i++) {
         ngram_buffer[0] = '\0'; // Limpa o buffer
 
@@ -166,6 +168,7 @@ void generateNgrams(StringList *tokens, int N, StringList *ngrams) {
         }
         addToList(ngrams, ngram_buffer);
     }
+    free(ngram_buffer);
 }
 
 /**
@@ -209,8 +212,8 @@ void countAndFilter(StringList *sorted_ngrams, int min_threshold) {
 // --- Função Principal ---
 
 int main() {
-    const char *input_path = "bible.txt";
-    int N = 2; // tamanho do N-gram (ex: 1=unigramas, 2=bigramas)
+    const char *input_path = "big_bible.txt";
+    int N = 6; // tamanho do N-gram (ex: 1=unigramas, 2=bigramas)
     int MIN_THRESHOLD = 2; // limiar mínimo de ocorrências de um N-gram para ser exibido
 
     // Lê todo o arquivo para uma string
@@ -224,6 +227,9 @@ int main() {
 
     initList(&tokens, 10);
     initList(&ngrams, 10);
+
+    clock_t start_time, end_time;
+    start_time = clock();
 
     // Passo 1: Tokenizar
     tokenize(text, &tokens);
@@ -244,6 +250,10 @@ int main() {
 
     // Passo 4: Contar e Filtrar
     countAndFilter(&ngrams, MIN_THRESHOLD);
+
+    end_time = clock();
+    double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    printf("Tempo total de processamento: %.2f segundos\n", time_spent);
 
     // Libera toda a memória
     freeList(&tokens);
