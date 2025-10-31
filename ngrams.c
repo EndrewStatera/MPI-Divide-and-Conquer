@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 // Estrutura para armazenar nossa lista dinâmica de strings (tokens ou n-gramas)
 typedef struct {
@@ -55,6 +56,64 @@ void freeList(StringList *list) {
 // Função de comparação para o qsort
 int compareStrings(const void *a, const void *b) {
     return strcmp(*(const char **)a, *(const char **)b);
+}
+
+// Lê um arquivo inteiro para uma string alocada dinamicamente.
+// Retorna ponteiro para a string (deve ser free'd pelo chamador) ou NULL em erro.
+char *read_file_to_string(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if (!f) {
+        fprintf(stderr, "Erro ao abrir arquivo '%s': %s\n", path, strerror(errno));
+        return NULL;
+    }
+
+    // Tenta descobrir o tamanho usando fseek/ftell
+    if (fseek(f, 0, SEEK_END) == 0) {
+        long sz = ftell(f);
+        if (sz >= 0) {
+            rewind(f);
+            char *buf = (char *)malloc((size_t)sz + 1);
+            if (!buf) {
+                fprintf(stderr, "Falha ao alocar %ld bytes\n", sz + 1);
+                fclose(f);
+                return NULL;
+            }
+            size_t read = fread(buf, 1, (size_t)sz, f);
+            buf[read] = '\0';
+            fclose(f);
+            return buf;
+        }
+        // Se ftell falhar, iremos para leitura por chunks
+        rewind(f);
+    }
+
+    // Fallback: lê em blocos quando o tamanho não é conhecido
+    size_t capacity = 8192;
+    char *buf = (char *)malloc(capacity);
+    if (!buf) {
+        fprintf(stderr, "Falha ao alocar buffer inicial\n");
+        fclose(f);
+        return NULL;
+    }
+    size_t len = 0;
+    size_t n;
+    while ((n = fread(buf + len, 1, capacity - len, f)) > 0) {
+        len += n;
+        if (len == capacity) {
+            capacity *= 2;
+            char *tmp = (char *)realloc(buf, capacity);
+            if (!tmp) {
+                fprintf(stderr, "Falha ao realocar buffer para %zu bytes\n", capacity);
+                free(buf);
+                fclose(f);
+                return NULL;
+            }
+            buf = tmp;
+        }
+    }
+    buf[len] = '\0';
+    fclose(f);
+    return buf;
 }
 
 // --- Funções Principais do Algoritmo ---
@@ -150,15 +209,15 @@ void countAndFilter(StringList *sorted_ngrams, int min_threshold) {
 // --- Função Principal ---
 
 int main() {
-    // Parâmetros do usuário
-    int N = 1; // Queremos Bigramas (N=2)
-    int MIN_THRESHOLD = 2; // Mostrar N-gramas que aparecem 3 ou mais vezes
+    const char *input_path = "bible.txt";
+    int N = 2; // tamanho do N-gram (ex: 1=unigramas, 2=bigramas)
+    int MIN_THRESHOLD = 2; // limiar mínimo de ocorrências de um N-gram para ser exibido
 
-    // Texto de exemplo
-    const char *text = 
-        "O cachorro correu para o parque. O cachorro feliz brincou no parque. "
-        "O gato dormiu no tapete. O cachorro correu de novo, pois o cachorro "
-        "é um cachorro muito feliz.";
+    // Lê todo o arquivo para uma string
+    char *text = read_file_to_string(input_path);
+    if (!text) {
+        return 1;
+    }
 
     StringList tokens;
     StringList ngrams;
@@ -183,20 +242,13 @@ int main() {
     // Passo 3: Ordenar
     qsort(ngrams.items, ngrams.size, sizeof(char *), compareStrings);
 
-    /*
-    // Descomente para ver todos os N-gramas ordenados
-    printf("\n--- N-gramas Ordenados ---\n");
-    for(int i=0; i<ngrams.size; i++) {
-        printf("%d: %s\n", i, ngrams.items[i]);
-    }
-    */
-
     // Passo 4: Contar e Filtrar
     countAndFilter(&ngrams, MIN_THRESHOLD);
 
     // Libera toda a memória
     freeList(&tokens);
     freeList(&ngrams);
+    free(text);
 
     return 0;
 }
