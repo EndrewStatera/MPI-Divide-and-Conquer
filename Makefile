@@ -1,9 +1,9 @@
-all: sort_parallel
+all: parallel
 
-sort_parallel: parallel.c
-	mpicc -o sort_parallel parallel.c
+parallel: parallel.cpp
+	mpic++ -o parallel parallel.cpp -std=c++11
 
 clean:
-	rm -f sort_parallel
+	rm -f parallel
 
 .PHONY: all clean
